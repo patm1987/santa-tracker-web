@@ -96,13 +96,11 @@ class Level {
 
     const intersections = this.raycasterSystem.cast(clientX, clientY);
     if (intersections.length > 0) {
-      const presentLanded = this.presentSystem.shoot(intersections[0].point);
       const targetObject = intersections[0].object;
-      if (targetObject instanceof THREE.Sprite &&
-          targetObject.userData.clickable &&
-          targetObject.userData.clickable.type === 'elf' &&
-          targetObject.userData.assetUrl !== undefined &&
-          !targetObject.userData.hasPresent) {
+      const hitElf = this.objectIsElf(targetObject);
+      const presentLanded = this.presentSystem.shoot(intersections[0].point, hitElf, intersections[0].normal);
+
+      if (hitElf) {
         // Wait for the present to hit its target and then update the elf's sprite.
         targetObject.userData.hasPresent = true;
         await presentLanded;
@@ -118,6 +116,14 @@ class Level {
         this.startTrain();
       }
     }
+  }
+
+  objectIsElf(targetObject) {
+    return targetObject instanceof THREE.Sprite &&
+      targetObject.userData.clickable &&
+      targetObject.userData.clickable.type === 'elf' &&
+      targetObject.userData.assetUrl !== undefined &&
+      !targetObject.userData.hasPresent;
   }
 
   startTrain() {

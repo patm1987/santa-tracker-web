@@ -72,10 +72,18 @@ class Present {
         this.shootResolveFunction = undefined;
     }
 
-    async shoot(targetPosition) {
+    async shoot(targetPosition, caught, normal) {
         if (this.shootPromise !== undefined) {
             await this.shootPromise;
             return;
+        }
+
+        if (caught === 'undefined') {
+            throw "Must indicate if this present was caught";
+        }
+
+        if (normal === 'undefined') {
+            throw "Must provide a normal vector for the target position";
         }
 
         // Move to world space to handle the throw
@@ -129,6 +137,8 @@ class Present {
                 break;
             case PresentStates.THROWN:
                 if (this.currentFlightTime > this.durationOfThrow) {
+                    // TODO: find velocity at end T, remember that f(t) = v_0 + at
+
                     this.state = PresentStates.LANDED;
                     this.model.position.copy(this.targetPosition);
                     if (this.shootResolveFunction) {

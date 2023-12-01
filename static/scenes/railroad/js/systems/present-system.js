@@ -66,8 +66,8 @@ class PresentSystem {
     this.currentPresent = present;
   }
 
-  async shoot(targetPosition) {
-    const landPromise = this.currentPresent.shoot(targetPosition);
+  async shoot(targetPosition, caught, normal) {
+    const landPromise = this.currentPresent.shoot(targetPosition, caught, normal);
     this.addNewPresent();
     // Add new present first and then await the landing promise so that
     // the player can keep throwing gifts.
