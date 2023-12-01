@@ -77,7 +77,7 @@ class PresentSystem {
   update(deltaSeconds) {
     for (let i = 0; i < this.presents.length; i++) {
       const present = this.presents[i];
-      if (present.landed) {
+      if (present.state === PresentStates.LANDED) {
         this.presents.splice(i, 1);
 
         present.removeFromScene();

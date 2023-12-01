@@ -9,6 +9,12 @@ const gravity = -20; // acceleration along y
 const linearThrowSpeed = 20; // velocity in the x/z plane
 const maxThrowVelocity = 8; // after we get to this dy, switch to changing gravity
 
+const PresentStates = {
+    IDLE: "idle",
+    THROWN: "thrown",
+    LANDED: "landed"
+}
+
 class Present {
 
     static async preload() {
@@ -27,8 +33,7 @@ class Present {
         }
 
         // Physics stuff
-        this.inFlight = false;
-        this.landed = false;
+        this.state = PresentStates.IDLE;
 
         // start of the throw
         this.startPosition = new THREE.Vector3();
@@ -109,7 +114,7 @@ class Present {
 
         // update the state
         this.currentFlightTime = 0;
-        this.inFlight = true;
+        this.state = PresentStates.THROWN;
 
         // Create a promise that will be resolved when the gift lands.
         this.shootPromise = new Promise(r => {
@@ -119,32 +124,38 @@ class Present {
     }
 
     update(deltaSeconds) {
-        if (this.inFlight && !this.landed) {
-            if (this.currentFlightTime > this.durationOfThrow) {
-                this.landed = true;
-                this.model.position.copy(this.targetPosition);
-                if (this.shootResolveFunction) {
-                    this.shootResolveFunction();
+        switch(this.state) {
+            case PresentStates.IDLE:
+                break;
+            case PresentStates.THROWN:
+                if (this.currentFlightTime > this.durationOfThrow) {
+                    this.state = PresentStates.LANDED;
+                    this.model.position.copy(this.targetPosition);
+                    if (this.shootResolveFunction) {
+                        this.shootResolveFunction();
+                    }
+                } else {
+                    var t = this.currentFlightTime/this.durationOfThrow;
+    
+                    // we move in the x/z plane with a lerp. This could be
+                    // optimized by not doing y stuff yere, but it wouldn't be as
+                    // readable
+                    var position = this.startPosition.clone();
+                    position.lerp(this.targetPosition, t);
+    
+                    // This is the most basic ballistic trajectory equation you can
+                    // have. Only effects y
+                    position.y = this.startPosition.y
+                        + this.velocityY * this.currentFlightTime
+                        + 1/2 * this.gravity * this.currentFlightTime * this.currentFlightTime;
+    
+                    this.model.position.copy(position);
+    
+                    this.currentFlightTime = this.currentFlightTime + deltaSeconds;
                 }
-            } else {
-                var t = this.currentFlightTime/this.durationOfThrow;
-
-                // we move in the x/z plane with a lerp. This could be
-                // optimized by not doing y stuff yere, but it wouldn't be as
-                // readable
-                var position = this.startPosition.clone();
-                position.lerp(this.targetPosition, t);
-
-                // This is the most basic ballistic trajectory equation you can
-                // have. Only effects y
-                position.y = this.startPosition.y
-                    + this.velocityY * this.currentFlightTime
-                    + 1/2 * this.gravity * this.currentFlightTime * this.currentFlightTime;
-
-                this.model.position.copy(position);
-
-                this.currentFlightTime = this.currentFlightTime + deltaSeconds;
-            }
+                break;
+            case PresentStates.LANDED:
+                break;
         }
     }
 
